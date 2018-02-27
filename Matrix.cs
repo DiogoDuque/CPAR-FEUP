@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace CPAR
 {
@@ -49,19 +50,32 @@ namespace CPAR
             return m3;
         }
 
+        static void generateAndMultMatrices(int n){
+            int[][] m1 = GenerateMatrix(n);
+            int[][] m2 = GenerateMatrix(n);
+            multMatrices(m1, m2, n);
+
+            //printMatrix(m1, n);
+            //printMatrix(m2, n);
+            //printMatrix(m3, n);
+        }
+
         static void Main(string[] args)
         {
             random = new Random();
-            int n = 2;
+            int n = 500;
+            const int nMax = 3000;
+            const int nInc = 500;
 
-            int[][] m1 = GenerateMatrix(n);
-            int[][] m2 = GenerateMatrix(n);
-            int[][] m3 = multMatrices(m1, m2, n);
-
-            printMatrix(m1, n);
-            printMatrix(m2, n);
-            printMatrix(m3, n);
-            //Console.ReadKey();
+            for(; n<=nMax; n+=nInc){
+                Stopwatch sw = Stopwatch.StartNew();
+                generateAndMultMatrices(n);
+                double elapsed = sw.ElapsedMilliseconds;
+                sw.Stop();
+                Console.WriteLine(n+"x"+n);
+                Console.WriteLine(String.Format("Time: {0:0.00}",elapsed/1000));
+                Console.WriteLine();
+            }
         }
 
         static void printMatrix(int[][] m, int n)

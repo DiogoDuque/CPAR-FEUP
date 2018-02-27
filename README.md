@@ -16,7 +16,8 @@ java Matrix
 
 ### C#
 ```
-WIP
+mcs Matrix.cs
+mono Matrix.exe
 ```
 
 ### Python 2.7
@@ -43,10 +44,9 @@ Checking available flags in my system:
 
 ### Matrix-multiplying algorithm
 
-| Language | Times |
-|          | 500 | 1000 | 1500 | 2000 | 2500 | 3000 | Total|
-|----------|-----|------|------|------|------|------|------|
-| C        |0|0|0|0|0|0|0|
-| C#       |0|0|0|0|0|0|0|
-| Java     |0|0|0|0|0|0|0|
-| Python   |13s|1m47s|6m15s|14m07s|28m27s|48m05s|1h38m55s|
+|Languages | 500 | 1000 | 1500 | 2000 | 2500 | 3000 |
+|:--------:|-----|------|------|------|------|------|
+| C        |0|0|0|0|0|0|
+| C#       |0.52s|  6s  | 54s | 2m44s |2m34s |9m48s |
+| Java     |0|0|0|0|0|0|
+| Python   | 13s |1m47s |6m15s|14m07s|28m27s|48m05s|
