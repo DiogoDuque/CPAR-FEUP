@@ -4,7 +4,7 @@
 
 ### C
 ```
-gcc matrix.c -Wall -o cMatrix /opt/papi/lib/libpapi.a
+gcc matrix.c -Wall -lm -o cMatrix /opt/papi/lib/libpapi.a
 ./cMatrix
 ```
 

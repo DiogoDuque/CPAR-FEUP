@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 #include <papi.h>
 
 struct Event{
@@ -10,12 +11,7 @@ struct Event{
 
 const struct Event events[] = {
                             {PAPI_L1_DCM, "DCM(L1)"},
-                            //{PAPI_L2_DCM, "DCM(L2)"},
-                            //{PAPI_LD_INS, "Load instructions"},
-                            {PAPI_SR_INS, "Store instructions"},
-                            {PAPI_MEM_WCY,"Cycles Stalled Waiting for memory writes"},
-                            {PAPI_TOT_INS, "Instructions completed"},
-                            //{PAPI_SP_OPS, "Floating point ops(single precision)"}
+                            {PAPI_L2_DCM, "DCM(L2)"},
                             };
 
 int createEventSet(){
@@ -55,22 +51,30 @@ int main(){
     for(int i=500; i<=3000; i+=500){
         long long papiVals[nEvents];
         //start counting with PAPI
+        long long startTime = PAPI_get_real_usec();
         ret = PAPI_start(EventSet);
         if (ret != PAPI_OK)
             printf("ERROR: Start PAPI\n");
 
+        //matrices calc
         generateAndMultiplyMatrices(i);
 
         //stop counting PAPI and print
         ret = PAPI_stop(EventSet, papiVals);
         if (ret != PAPI_OK)
             printf("ERROR: Stop PAPI\n");
+        long long endTime = PAPI_get_real_usec();
 
         printf("%dx%d matrix:\n",i,i);
         for(int j=0; j<nEvents; j++){
             printf("%s: %lld\n",events[j].name,papiVals[j]);
         }
-        printf("\n");
+        long long totalDCM = papiVals[0]+papiVals[1];
+        long long flop = 2*((long long)pow(i,3));
+        double deltaTime = ((double)endTime - startTime)/1000000; //in seconds
+        long long flops = flop/deltaTime; //(time in seconds)
+        float cacheMissesPerFlop = (float)totalDCM/flop;
+        printf("Total DCMs: %lld\nTime: %.3lfs\nFLOP: %lld\nFLOPS: %lld\nCM/FLOP: %.3f\n\n", totalDCM, deltaTime, flop, flops, cacheMissesPerFlop);
 
         ret = PAPI_reset( EventSet );
 		if ( ret != PAPI_OK )
@@ -108,7 +112,7 @@ int** generateMatrix(int n){
     int** m = malloc(n*sizeof(int*));
 
     for(int i=0; i<n; i++){
-        int* row = malloc(n*sizeof(int));
+        int* row = malloc(n*sizeof(int)); //TODO not use this line
         for(int j=0; j<n; j++){
             row[j] = rand() % 10;
         }
