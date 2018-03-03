@@ -95,40 +95,36 @@ int main(){
     return 0;
 }
 
-int** generateZeroMatrix(int n){
-    int** m = malloc(n*sizeof(int*));
+int* generateZeroMatrix(int n){
+    int* m = malloc(n*n*sizeof(int));
 
     for(int i=0; i<n; i++){
-        int* row = malloc(n*sizeof(int));
         for(int j=0; j<n; j++){
-            row[j] = 0;
+            *(m + i*n+j) = 0;
         }
-        m[i]=row;
     }
     return m;
 }
 
-int** generateMatrix(int n){
-    int** m = malloc(n*sizeof(int*));
+int* generateMatrix(int n){
+    int* m = malloc(n*n*sizeof(int));
 
     for(int i=0; i<n; i++){
-        int* row = malloc(n*sizeof(int)); //TODO not use this line
         for(int j=0; j<n; j++){
-            row[j] = rand() % 10;
+            *(m + i*n+j) = rand() % 10;
         }
-        m[i]=row;
     }
 
     return m;
 }
 
-int** multiplyMatrices(int** m1, int** m2, int n){
-    int** m = generateZeroMatrix(n);
+int* multiplyMatrices(int* m1, int* m2, int n){
+    int* m = generateZeroMatrix(n);
 
     for(int i=0; i<n; i++){
         for(int j=0; j<n; j++){
             for(int t=0; t<n; t++){
-                m[i][j] += m1[i][t] * m2[t][j];
+                *(m + i*n+j) += *(m1 + i*n+t) * *(m2 + t*n+j);
             }
         }
     }
@@ -137,8 +133,8 @@ int** multiplyMatrices(int** m1, int** m2, int n){
 }
 
 void generateAndMultiplyMatrices(int n){
-    int** m1 = generateMatrix(n);
-    int** m2 = generateMatrix(n);
+    int* m1 = generateMatrix(n);
+    int* m2 = generateMatrix(n);
 
-    /*int** m3 = */multiplyMatrices(m1,m2, n);
+    /*int* m3 = */multiplyMatrices(m1,m2, n);
 }
