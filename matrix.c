@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <string.h>
 #include <papi.h>
 
 struct Event{
@@ -36,9 +37,14 @@ int createEventSet(){
     return EventSet;
 }
 
-void generateAndMultiplyMatrices(int n);
+void generateAndMultiplyMatrices(int n, char* algorithmVersion);
 
-int main(){
+int main(int argc, char **argv){
+    if(argc != 2 || (!strcmp(argv[1],"v1") && !strcmp(argv[1],"v2"))){
+        printf("Usage: cMatrix < v1 | v2 >\n");
+        return -1;
+    }
+
     //PAPI inits
     int ret;
     int EventSet = createEventSet();
@@ -57,7 +63,7 @@ int main(){
             printf("ERROR: Start PAPI\n");
 
         //matrices calc
-        generateAndMultiplyMatrices(i);
+        generateAndMultiplyMatrices(i, argv[1]);
 
         //stop counting PAPI and print
         ret = PAPI_stop(EventSet, papiVals);
@@ -132,9 +138,26 @@ int* multiplyMatrices(int* m1, int* m2, int n){
     return m;
 }
 
-void generateAndMultiplyMatrices(int n){
+int* multiplyMatricesV2(int* m1, int* m2, int n){
+    int* m = generateZeroMatrix(n);
+
+    for(int i=0; i<n; i++){
+        for(int j=0; j<n; j++){
+            int m1Element = *(m1 + i*n+j);
+            for(int t=0; t<n; t++){
+                *(m + i*n+t) += m1Element * *(m2 + j*n+t);
+            }
+        }
+    }
+
+    return m;
+}
+
+void generateAndMultiplyMatrices(int n, char* algorithmVersion){
     int* m1 = generateMatrix(n);
     int* m2 = generateMatrix(n);
 
-    /*int* m3 = */multiplyMatrices(m1,m2, n);
+    if(!strcmp("v1",algorithmVersion))
+        multiplyMatrices(m1,m2, n);
+    else multiplyMatricesV2(m1,m2,n);
 }
