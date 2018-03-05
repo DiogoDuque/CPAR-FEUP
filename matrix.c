@@ -54,7 +54,8 @@ int main(int argc, char **argv){
     //starting
     srand(time(NULL));
 
-    for(int i=500; i<=3000; i+=500){
+    //for(int i=500; i<=3000; i+=500){
+    for(int i=5000; i<=10000; i+=1000){
         long long papiVals[nEvents];
         //start counting with PAPI
         long long startTime = PAPI_get_real_usec();
@@ -71,7 +72,7 @@ int main(int argc, char **argv){
             printf("ERROR: Stop PAPI\n");
         long long endTime = PAPI_get_real_usec();
 
-        printf("%dx%d matrix:\n",i,i);
+        printf("%dx%d matrix (%s):\n",i,i,argv[1]);
         for(int j=0; j<nEvents; j++){
             printf("%s: %lld\n",events[j].name,papiVals[j]);
         }
