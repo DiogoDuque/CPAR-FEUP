@@ -54,8 +54,8 @@ int main(int argc, char **argv){
     //starting
     srand(time(NULL));
 
-    //for(int i=500; i<=3000; i+=500){
-    for(int i=5000; i<=10000; i+=1000){
+    for(int i=500; i<=3000; i+=500){
+    //for(int i=5000; i<=10000; i+=1000){
         long long papiVals[nEvents];
         //start counting with PAPI
         long long startTime = PAPI_get_real_usec();
@@ -81,7 +81,7 @@ int main(int argc, char **argv){
         double deltaTime = ((double)endTime - startTime)/1000000; //in seconds
         long long flops = flop/deltaTime; //(time in seconds)
         float cacheMissesPerFlop = (float)totalDCM/flop;
-        printf("Total DCMs: %lld\nTime: %.3lfs\nFLOP: %lld\nFLOPS: %lld\nCM/FLOP: %.3f\n\n", totalDCM, deltaTime, flop, flops, cacheMissesPerFlop);
+        printf("Total DCMs: %lld\nFLOP: %lld\nFLOPS: %lld\nCM/FLOP: %.3f\nTime: %.3lfs\n\n", totalDCM, flop, flops, cacheMissesPerFlop, deltaTime);
 
         ret = PAPI_reset( EventSet );
 		if ( ret != PAPI_OK )
