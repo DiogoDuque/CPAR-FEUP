@@ -80,6 +80,7 @@ float *multiplyMatrices(float *m1, float *m2, int n)
     {
         for (int j = 0; j < n; j++)
         {
+            //printf("(%d, %d)\n",i,j);
             for (int t = 0; t < n; t++)
             {
                 *(m + i * n + j) += *(m1 + i * n + t) * *(m2 + t * n + j);
@@ -229,10 +230,9 @@ int main(int argc, char **argv)
     }
     else
     {
-        for (int i = 500; i <= 3000; i += 500)
-        //for(int i=5000; i<=10000; i+=1000)
+        //for (int i = 500; i <= 3000; i += 500)
+        for(int i=5000; i<=10000; i+=1000)
         {
-            //for(int i=5000; i<=10000; i+=1000){
             long long papiVals[nEvents];
             //start counting with PAPI
             long long startTime = PAPI_get_real_usec();
