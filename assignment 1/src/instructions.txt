@@ -1,0 +1,58 @@
+======= Instructions =======
+
+
+
+
+===== C =====
+
+
+=== Compiling ===
+
+gcc matrix.c -Wall -O3 -fopenmp -lm -o cMatrix /opt/papi/lib/libpapi.a
+
+
+=== Executing ===
+
+Usage: cMatrix < v1 | v2 > [parallel]
+v1 is a naive approach; v2 is uses row-major order
+'parallel' is an optional argument for parallel computing
+
+
+
+
+===== Java =====
+
+
+=== Compiling ===
+
+javac Matrix.java
+
+
+=== Executing ===
+
+java Matrix
+
+
+
+
+===== C# =====
+
+
+=== Compiling ===
+
+mcs Matrix.cs
+
+
+=== Executing ===
+
+mono Matrix.exe
+
+
+
+
+===== Python =====
+
+
+=== Executing ===
+
+python matrix.py
