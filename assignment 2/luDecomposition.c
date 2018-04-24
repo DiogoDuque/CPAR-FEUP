@@ -117,24 +117,37 @@ void dolittle_naive(float** a, float** l, float** u, int n){
 
 int main(int argc, char **argv){
     srand(time(NULL));
+    int ret;
 
-    int n = 3;
-    float** a = generateMatrix(n);
-    float** l = generateLowerMatrix(n);
-    float** u = generateUpperMatrix(n);
-    displayMatrix(a, n);
-    printf("\n");
-    displayTabbedMatrix(u, n, 5);
-    displayMatrix(l, n);//*/
+    ret = PAPI_library_init(PAPI_VER_CURRENT);
+    if (ret != PAPI_VER_CURRENT)
+        printf("ERROR: Failed version\n");
+    
+    
 
-    dolittle_naive(a, l, u, n);
+    for(int i=1000; i<=6000; i+=1000){
+        long long startTime = PAPI_get_real_usec();
 
-    printf("\n");
-    displayTabbedMatrix(u, n, 5);
-    displayMatrix(l, n);//*/
+        float** a = generateMatrix(i);
+        float** l = generateLowerMatrix(i);
+        float** u = generateUpperMatrix(i);
+        /*displayMatrix(a, i);
+        printf("\n");
+        displayTabbedMatrix(u, i, 5);
+        displayMatrix(l, i);//*/
 
-    printf("\n");
-    displayMatrix(multiplyMatrices(l,u,n),n);
+        dolittle_naive(a, l, u, i);
+        long long endTime = PAPI_get_real_usec();
+        double deltaTime = ((double)endTime - startTime) / 1000000; //in seconds
+        printf("Calculated %dx%d in %.3lfs\n", i, i, deltaTime);
+
+        /*printf("\n");
+        displayTabbedMatrix(u, i, 5);
+        displayMatrix(l, i);//*/
+
+        /*printf("\n");
+        displayMatrix(multiplyMatrices(l,u,i),i);//*/
+    }
 
     return 0;
 }
