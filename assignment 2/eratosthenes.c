@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include <stdbool.h>
 #include <papi.h>
 
@@ -50,8 +51,24 @@ struct Primes eratosthenes(int nMax) {
 }
 
 int main(int argc, char **argv){
-    int ret;
+    const char usageStr[] = "Usage: eratosthenes <seq|shared|distr>\nseq: Sequential Program\nshared: Parallel Program with Shared memory\ndistr: Parallel Program with Distributed memory\n";
+    if(argc != 2){
+        printf(usageStr);
+        return 1;
+    }
+    bool isSequential = false, isParShared = false, isParDistr = false;
+    if(strcmp("seq",argv[1]) == 0)
+        isSequential=true;
+    else if(strcmp("shared",argv[1]) == 0)
+        isParShared = true;
+    else if(strcmp("distr", argv[1]) == 0)
+        isParDistr = true;
+    else {
+        printf(usageStr);
+        return 1;
+    }
 
+    int ret;
     ret = PAPI_library_init(PAPI_VER_CURRENT);
     if (ret != PAPI_VER_CURRENT)
         printf("ERROR: Failed version\n");
@@ -61,7 +78,16 @@ int main(int argc, char **argv){
     int MAX_N  = 600000000;
     for(int i=100000000; i<=MAX_N; i+=100000000){
         long long startTime = PAPI_get_real_usec();
-        struct Primes p = eratosthenes(i);
+
+        struct Primes p;
+        if(isSequential)
+            p = eratosthenes(i);
+        else if(isParShared)
+            printf("NOT IMPLEMENTED\n");
+        else if(isParDistr)
+            printf("NOT IMPLEMENTED\n");
+        else printf("ERROR??\n");
+        
         long long endTime = PAPI_get_real_usec();
         double deltaTime = ((double)endTime - startTime) / 1000000; //in seconds
 
