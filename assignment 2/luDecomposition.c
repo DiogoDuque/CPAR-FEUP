@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <papi.h>
 
 float **multiplyMatrices(float **m1, float **m2, int n)
 {
