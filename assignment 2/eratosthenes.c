@@ -26,12 +26,12 @@ struct Primes eratosthenes(int nMax) {
     }
 
     int numberOfPrimes = 0;
-    for(int i=0; i<nMax-1; i++){
+    for(int i=1; i<nMax-1; i++){ // starts searching on 3, as this allows as to modify the algorithm to skip even numbers
         int n = numbers[i];
         if(n == 0) // if was already seen, is not a prime
             continue;
         numberOfPrimes++;
-        for(int j=i+n; j<nMax-1; j+=n){
+        for(int j=i+2*n; j<nMax-1; j+=2*n){
             numbers[j]=0; // mark as seen and as not prime
         }
     }
