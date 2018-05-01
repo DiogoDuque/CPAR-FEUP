@@ -43,9 +43,10 @@ bool testMatrixEquiality(double **m1, double **m2, int n)
         for (int j = 0; j < n; j++)
         {
             double a = m1[i][j], b = m2[i][j];
-            double diff = fabs(a)-fabs(b);
-            if (diff>0.001 || diff<-0.001){
-                printf("ERROR on [%d][%d]: %lf!=%lf\n",i,j,m1[i][j],m2[i][j]);
+            double diff = fabs(a) - fabs(b);
+            if (diff > 0.001 || diff < -0.001)
+            {
+                printf("ERROR on [%d][%d]: %lf!=%lf\n", i, j, m1[i][j], m2[i][j]);
                 return false;
             }
         }
@@ -159,7 +160,7 @@ void dolittleShared(double **a, double **l, double **u, int n)
     {
         for (int m = k; m < n; m++)
         { //kth row of u
-            int tmp = a[k][m];
+            double tmp = a[k][m];
             #pragma omp parallel for reduction(-:tmp)
             for (int j = 0; j < k; j++)
             {
@@ -169,11 +170,11 @@ void dolittleShared(double **a, double **l, double **u, int n)
         }
         for (int i = k; i < n; i++)
         { //kth column of l
-            int tmp = a[i][k];
+            double tmp = a[i][k];
             #pragma omp parallel for reduction(-:tmp)
             for (int j = 0; j < k; j++)
             {
-                l[i][k] -= l[i][j] * u[j][k];
+                tmp -= l[i][j] * u[j][k];
             }
             tmp /= u[k][k];
             l[i][k] = tmp;
@@ -214,27 +215,27 @@ int main(int argc, char **argv)
         if (isSequential)
         {
             printf("======= Running Sequential...\n");
-            clock_gettime( CLOCK_MONOTONIC, &t_start);
+            clock_gettime(CLOCK_MONOTONIC, &t_start);
             dolittle(a, l, u, i);
         }
         else if (isParShared)
         {
             printf("=======Running Shared...\n");
-            clock_gettime( CLOCK_MONOTONIC, &t_start);
+            clock_gettime(CLOCK_MONOTONIC, &t_start);
             dolittleShared(a, l, u, i);
         }
         else
         {
             printf("=======Running Test...\n");
-            //startTime = PAPI_get_real_usec();
-            //i = 10;
-            dolittle(a, l, u, i);
+            clock_gettime(CLOCK_MONOTONIC, &t_start);
+            i = 10;
+            dolittleShared(a, l, u, i);
         }
 
-        clock_gettime( CLOCK_MONOTONIC, &t_stop);
-        double deltaTime = (t_stop.tv_sec - t_start.tv_sec ) + ( t_stop.tv_nsec - t_start.tv_nsec) / 1000000000.0; //in seconds
+        clock_gettime(CLOCK_MONOTONIC, &t_stop);
+        double deltaTime = (t_stop.tv_sec - t_start.tv_sec) + (t_stop.tv_nsec - t_start.tv_nsec) / 1000000000.0; //in seconds
         printf("Calculated %dx%d in %.4lfs\n", i, i, deltaTime);
-        //testMatrixEquiality(a, multiplyMatrices(l, u, i), i);
+        testMatrixEquiality(a, multiplyMatrices(l, u, i), i);
 
         /*printf("\n");
         displayMatrix(multiplyMatrices(l,u,i),i);//*/
