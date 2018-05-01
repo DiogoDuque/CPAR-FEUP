@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <omp.h>
-#include <papi.h>
+#include <mpi.h>
 
 #define OMP_N_THREADS 3
 #define OMP_CHUNK_SIZE 40
@@ -108,66 +108,50 @@ struct Primes eratosthenesShared(int nMax)
 
 int main(int argc, char **argv)
 {
-    const char usageStr[] = "Usage: eratosthenes <seq|shared|distr|test>\nseq: Sequential Program\nshared: Parallel Program with Shared memory\ndistr: Parallel Program with Distributed memory\n";
+    const char usageStr[] = "Usage: eratosthenes <seq|shared>\nseq: Sequential Program\nshared: Parallel Program with Shared memory\n";
     if (argc != 2)
     {
         printf(usageStr);
         return 1;
     }
-    bool isSequential = false, isParShared = false, isParDistr = false;
+    bool isSequential = false, isParShared = false;
     if (strcmp("seq", argv[1]) == 0)
         isSequential = true;
     else if (strcmp("shared", argv[1]) == 0)
         isParShared = true;
-    else if (strcmp("distr", argv[1]) == 0)
-        isParDistr = true;
     else if (strcmp("test", argv[1]) != 0)
     {
         printf(usageStr);
         return 1;
     }
 
-    int ret;
-    ret = PAPI_library_init(PAPI_VER_CURRENT);
-    if (ret != PAPI_VER_CURRENT)
-        printf("ERROR: Failed version\n");
-
     int MAX_N = 600000000;
     for (int i = 100000000; i <= MAX_N; i += 100000000)
     {
-        long long startTime;
+        struct timespec t_start, t_stop;
+        clock_gettime(CLOCK_MONOTONIC, &t_start);
 
         struct Primes p;
         if (isSequential)
         {   
             printf("======= Running Sequential...\n");
-            startTime = PAPI_get_real_usec();
             p = eratosthenes(i);
         }
         else if (isParShared)
         {
             printf("=======Running Shared... Threads: %d, ChunkSize: %d\n",OMP_N_THREADS, OMP_CHUNK_SIZE);
-            startTime = PAPI_get_real_usec();
             p = eratosthenesShared(i);
-        }
-        else if (isParDistr)
-        {
-            printf("=======NOT IMPLEMENTED\n");
-            //startTime = PAPI_get_real_usec();
-            //p = eratosthenesDistributed(i);
-            continue;
         }
         else
         {
             printf("=======Running Test...\n");
-            startTime = PAPI_get_real_usec();
             p = eratosthenesShared(120);
         }
 
-        long long endTime = PAPI_get_real_usec();
-        double deltaTime = ((double)endTime - startTime) / 1000000; //in seconds
+        clock_gettime(CLOCK_MONOTONIC, &t_stop);
+        float deltaTime = (float) (( t_stop.tv_sec - t_start.tv_sec ) + ( t_stop.tv_nsec - t_start.tv_nsec ) / 1000000000.0); //in seconds
 
-        printf("Found %d primes in %.3lfs\n", p.size, deltaTime);
+        printf("Found %d primes in %.4lfs\n", p.size, deltaTime);
         //displayNumbers(p.numbers, p.size);
     }
 

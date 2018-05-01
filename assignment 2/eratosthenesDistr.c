@@ -96,7 +96,7 @@ int main(int argc, char **argv){
     int globalPrimeCount = 0;
     int maxLocalPrimeCount = 0;
     MPI_Reduce(&localPrimeCount, &globalPrimeCount, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&localPrimeCount, &maxLocalPrimeCount, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Allreduce(&localPrimeCount, &maxLocalPrimeCount, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
     // get primes
     int localPrimes[maxLocalPrimeCount];
@@ -104,18 +104,25 @@ int main(int argc, char **argv){
     for(int i=0; i<blockSize; i++)
         if(numbers[i] != 0)
             localPrimes[localPrimeCount++]=numbers[i];
+            
+    printf("T%d here\n",rank);
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // get primes on root thread
     int* globalPrimesRecv;
     if(rank == 0)
         globalPrimesRecv = (int*)malloc(maxLocalPrimeCount*size*sizeof(int));
     MPI_Gather(&localPrimes,localPrimeCount,MPI_INT,globalPrimesRecv,maxLocalPrimeCount,MPI_INT,0,MPI_COMM_WORLD);
-    
-    int* globalPrimes = (int*)malloc(arraySize*sizeof(int));
-    globalPrimeCount = 0;
-    for(int i=0; i<maxLocalPrimeCount*size; i++)
-        if(globalPrimesRecv[i] > 0 && globalPrimesRecv[i] <= nMax)
-            globalPrimes[globalPrimeCount++]=globalPrimesRecv[i];
+
+    int* globalPrimes;
+    if(rank == 0)
+    {
+        globalPrimes = (int*)malloc(arraySize*sizeof(int));
+        globalPrimeCount = 0;
+        for(int i=0; i<maxLocalPrimeCount*size; i++)
+            if(globalPrimesRecv[i] > 0 && globalPrimesRecv[i] <= nMax)
+                globalPrimes[globalPrimeCount++]=globalPrimesRecv[i];
+    }
 
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -125,8 +132,7 @@ int main(int argc, char **argv){
     if(rank == 0)
     {
         printf("Found %d primes in %d numbers\nTime: %.4lfs\n", globalPrimeCount, n, finishTime-startTime);
-        displayNumbers(globalPrimes, globalPrimeCount);
+        //displayNumbers(globalPrimes, globalPrimeCount);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 }
