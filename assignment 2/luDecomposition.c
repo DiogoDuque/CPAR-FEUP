@@ -130,20 +130,20 @@ double **generateLowerMatrix(int n)
 }
 
 // http://mathonline.wikidot.com/the-algorithm-for-doolittle-s-method-for-lu-decompositions
-void dolittle(double **a, double **l, double **u, int n)
+void doolittle(double **a, double **l, double **u, int n)
 {
     for (int k = 0; k < n; k++)
     {
-        for (int m = k; m < n; m++)
-        { //kth row of u
+        for (int m = k; m < n; m++)  //kth row of u
+        {
             u[k][m] = a[k][m];
             for (int j = 0; j < k; j++)
             {
                 u[k][m] -= l[k][j] * u[j][m];
             }
         }
-        for (int i = k; i < n; i++)
-        { //kth column of l
+        for (int i = k; i < n; i++) //kth column of l
+        {
             l[i][k] = a[i][k];
             for (int j = 0; j < k; j++)
             {
@@ -154,7 +154,7 @@ void dolittle(double **a, double **l, double **u, int n)
     }
 }
 
-void dolittleShared(double **a, double **l, double **u, int n)
+void doolittleShared(double **a, double **l, double **u, int n)
 {
     for (int k = 0; k < n; k++)
     {
@@ -216,20 +216,20 @@ int main(int argc, char **argv)
         {
             printf("======= Running Sequential...\n");
             clock_gettime(CLOCK_MONOTONIC, &t_start);
-            dolittle(a, l, u, i);
+            doolittle(a, l, u, i);
         }
         else if (isParShared)
         {
             printf("=======Running Shared...\n");
             clock_gettime(CLOCK_MONOTONIC, &t_start);
-            dolittleShared(a, l, u, i);
+            doolittleShared(a, l, u, i);
         }
         else
         {
             printf("=======Running Test...\n");
             clock_gettime(CLOCK_MONOTONIC, &t_start);
             i = 10;
-            dolittleShared(a, l, u, i);
+            doolittleShared(a, l, u, i);
         }
 
         clock_gettime(CLOCK_MONOTONIC, &t_stop);
