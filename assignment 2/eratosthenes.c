@@ -6,8 +6,9 @@
 #include <omp.h>
 #include <mpi.h>
 
-#define OMP_N_THREADS 3
+#define OMP_N_THREADS 4
 #define OMP_CHUNK_SIZE 40
+#define OMP_BIG_CHUNK_SIZE 25000000
 
 struct Primes
 {
@@ -68,7 +69,7 @@ struct Primes eratosthenesShared(int nMax)
     const int nMin = 2;
 
     int *numbers = (int *)malloc((nMax - 1) * sizeof(int));
-#pragma omp parallel for
+#pragma omp parallel for num_threads(OMP_N_THREADS) schedule(static, OMP_BIG_CHUNK_SIZE)
     for (int n = nMin; n <= nMax; n++) //init array, but only with odd numbers (except for '2')
     {
         numbers[n - nMin] = (n % 2 == 0 && n != 2) ? 0 : n;
@@ -92,7 +93,7 @@ struct Primes eratosthenesShared(int nMax)
     int *primes = (int *)malloc(numberOfPrimes * sizeof(int));
     primes[0] = 2;
     numberOfPrimes = 1;
-#pragma omp parallel for
+#pragma omp parallel for num_threads(OMP_N_THREADS) schedule(static, OMP_BIG_CHUNK_SIZE)
     for (int i = 1; i < nMax - 1; i += 2)
     {
         if (numbers[i] == 0)

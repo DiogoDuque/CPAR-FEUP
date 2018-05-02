@@ -235,7 +235,7 @@ int main(int argc, char **argv)
         clock_gettime(CLOCK_MONOTONIC, &t_stop);
         double deltaTime = (t_stop.tv_sec - t_start.tv_sec) + (t_stop.tv_nsec - t_start.tv_nsec) / 1000000000.0; //in seconds
         printf("Calculated %dx%d in %.4lfs\n", i, i, deltaTime);
-        testMatrixEquiality(a, multiplyMatrices(l, u, i), i);
+        //testMatrixEquiality(a, multiplyMatrices(l, u, i), i);
 
         /*printf("\n");
         displayMatrix(multiplyMatrices(l,u,i),i);//*/
