@@ -9,12 +9,6 @@
 #define BLOCK_SIZE(id,n,p) (BLOCK_LOW((id)+1,n,p)-BLOCK_LOW(id,n,p))
 #define BLOCK_OWNER(index,p,n) (((p)*(index)+1)-1)/(n))
 
-struct Primes
-{
-    int *numbers;
-    int size;
-};
-
 void displayNumbers(int *numbers, int size)
 {
     for (int i = 0; i < size; i++)
@@ -34,42 +28,43 @@ int main(int argc, char **argv){
         return 1;
     }
 
-    int n = atoi(argv[1]);
+    long int n = atoi(argv[1]);
 
     double startTime = MPI_Wtime();
     
     // ========== START ALGORITHM ==========
 
-    const int nMax = n;
-    const int arraySize = nMax+1;
-    int lowBound = BLOCK_LOW(rank, arraySize, size);
+    const long int nMax = n;
+    const long int arraySize = nMax+1;
+    long int lowBound = BLOCK_LOW(rank, arraySize, size);
     //int highBound = BLOCK_HIGH(rank, arraySize, size);
-    int blockSize = BLOCK_SIZE(rank, arraySize, size);
+    long int blockSize = BLOCK_SIZE(rank, arraySize, size);
 
-    int *numbers = (int *)malloc((blockSize) * sizeof(int));
-    for (int i=0; i<blockSize; i++) //init array, but only with odd numbers (except for '2')
+    long int *numbers = (long int *)malloc((blockSize) * sizeof( long int));
+    for (long int i=0; i<blockSize; i++) //init array, but only with odd numbers (except for '2')
     {
-        int globalNumber = lowBound+i;
+        long int globalNumber = lowBound+i;
         numbers[i] = ((globalNumber % 2 == 0 && globalNumber != 2) || globalNumber<=1) ? 0 : globalNumber;
     }
 
-    int itIndex = 3;
-    for(int prime = 3; prime*prime<=nMax;)
+
+    long int itIndex = 3;
+    for(long int prime = 3; prime*prime<=nMax;)
     {
-        int startingIndex;
+        long int startingIndex;
         if(prime*prime <= lowBound)
         {
-            int remainder = lowBound % prime;
+            long int remainder = lowBound % prime;
             if(remainder == 0) // easy divide
                 startingIndex = 0;
             else
                 startingIndex = prime - remainder;
             
-        } else { // last iteration, as k is on the edge
+        } else {
             startingIndex = prime*prime - lowBound;
         }
 
-        for(int i=startingIndex; i<blockSize; i+=prime){
+        for(long int i=startingIndex; i<blockSize; i+=prime){
             numbers[i]=0;
         }
 
@@ -83,12 +78,15 @@ int main(int argc, char **argv){
             }
 
         }
-        MPI_Bcast(&prime, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&prime, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
     }
+
+
+
 
     // count primes
     int localPrimeCount = 0;
-    for(int i=0; i<blockSize; i++)
+    for(long int i=0; i<blockSize; i++)
         if(numbers[i] != 0)
             localPrimeCount++;
     
@@ -98,41 +96,50 @@ int main(int argc, char **argv){
     MPI_Reduce(&localPrimeCount, &globalPrimeCount, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Allreduce(&localPrimeCount, &maxLocalPrimeCount, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
+
+
     // get primes
-    int localPrimes[maxLocalPrimeCount];
+    long int* localPrimes = (long int*) malloc(sizeof(long int) * maxLocalPrimeCount);
     localPrimeCount=0;
-    for(int i=0; i<blockSize; i++)
+    for(long int i=0; i<blockSize; i++)
         if(numbers[i] != 0)
             localPrimes[localPrimeCount++]=numbers[i];
-            
-    printf("T%d here\n",rank);
-    MPI_Barrier(MPI_COMM_WORLD);
 
     // get primes on root thread
-    int* globalPrimesRecv;
+    long int* globalPrimesRecv;
     if(rank == 0)
-        globalPrimesRecv = (int*)malloc(maxLocalPrimeCount*size*sizeof(int));
-    MPI_Gather(&localPrimes,localPrimeCount,MPI_INT,globalPrimesRecv,maxLocalPrimeCount,MPI_INT,0,MPI_COMM_WORLD);
+        globalPrimesRecv = (long int*)malloc(maxLocalPrimeCount*size*sizeof(long int));
+    MPI_Gather(localPrimes,localPrimeCount,MPI_LONG_LONG,globalPrimesRecv,maxLocalPrimeCount,MPI_LONG_LONG,0,MPI_COMM_WORLD);
 
-    int* globalPrimes;
+
+    long int* globalPrimes;
     if(rank == 0)
     {
-        globalPrimes = (int*)malloc(arraySize*sizeof(int));
+        globalPrimes = (long int*)malloc(arraySize*sizeof(int));
         globalPrimeCount = 0;
-        for(int i=0; i<maxLocalPrimeCount*size; i++)
+        for(long int i=0; i<maxLocalPrimeCount*size; i++)
             if(globalPrimesRecv[i] > 0 && globalPrimesRecv[i] <= nMax)
                 globalPrimes[globalPrimeCount++]=globalPrimesRecv[i];
     }
 
+
+
     MPI_Barrier(MPI_COMM_WORLD);
+
+
+
 
     // ========== END ALGORITHM ==========
 
     double finishTime = MPI_Wtime();
     if(rank == 0)
     {
-        printf("Found %d primes in %d numbers\nTime: %.4lfs\n", globalPrimeCount, n, finishTime-startTime);
+        printf("Found %d primes in %ld numbers\nTime: %.4lfs\n", globalPrimeCount, n, finishTime-startTime);
         //displayNumbers(globalPrimes, globalPrimeCount);
     }
+
+
     MPI_Finalize();
+
+    free(localPrimes);
 }
