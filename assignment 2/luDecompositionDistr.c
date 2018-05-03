@@ -109,10 +109,13 @@ int main(int argc, char **argv)
         {
             for (int j = 0; j <= k; j++)
             {
-                printf("T%d(recv): U[%d][%d]=%f\n", rank, j, k, currentCol[j]);
+                //printf("T%d(recv): U[%d][%d]=%f\n", rank, j, k, currentCol[j]);
                 u[j][k] = currentCol[j];
             }
         }
+
+        MPI_Barrier(MPI_COMM_WORLD); //===========DELETE
+        MPI_Barrier(MPI_COMM_WORLD); //===========DELETE
 
         // calculate l's kth column
         for (int i = k + offset; i < n; i += size)
@@ -138,11 +141,11 @@ int main(int argc, char **argv)
                     currentLine[j] = l[k + 1][j];
                 }
             }
-            MPI_Bcast(currentLine, k, MPI_DOUBLE, (rankWithoutOffset + 1) % 4, MPI_COMM_WORLD);
+            MPI_Bcast(currentLine, k+1, MPI_DOUBLE, (rankWithoutOffset + 1) % 4, MPI_COMM_WORLD);
             if (offset != 1)
                 for (int j = 0; j <= k; j++)
                 {
-                    printf("T%d(recv): L[%d][%d]=%f\n", rank, k, j, currentLine[j]);
+                    //printf("T%d(recv): L[%d][%d]=%f\n", rank, k + 1, j, currentLine[j]);
                     l[k + 1][j] = currentLine[j];
                 }
         }
