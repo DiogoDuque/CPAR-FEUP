@@ -71,20 +71,12 @@ int main(int argc, char **argv)
         const int offset = (rank - k + size) % size;
         const int rankWithoutOffset = k % size;
 
-        MPI_Barrier(MPI_COMM_WORLD);
-        if (offset == 0)
-        {
-            printf("===== k=%d =====\n", k);
-        }
-
         // calculate u's kth row
         for (int m = k + offset; m < n; m += size)
         {
             u[k][m] = a[k][m];
             for (int j = 0; j < k; j++)
             {
-                /*if (offset == 0)
-                    printf("U[%d][%d] -= %fx%f\n", k, m, l[k][j], u[j][m]);//*/
                 u[k][m] -= l[k][j] * u[j][m];
             }
             if (m == k && u[k][m] == 0) // check if impossible to calc
@@ -95,12 +87,12 @@ int main(int argc, char **argv)
         }
 
         // share u's newly completed column
-        double *currentCol = (double *)malloc(k + 1 * sizeof(double));
+        double *currentCol = (double *)malloc((k + 1) * sizeof(double));
         if (offset == 0)
         {
             for (int j = 0; j <= k; j++)
             {
-                printf("T%d(send): U[%d][%d]=%f\n", rank, j, k, u[j][k]);
+                //printf("T%d(send): U[%d][%d]=%f\n", rank, j, k, u[j][k]);
                 currentCol[j] = u[j][k];
             }
         }
@@ -109,13 +101,9 @@ int main(int argc, char **argv)
         {
             for (int j = 0; j <= k; j++)
             {
-                //printf("T%d(recv): U[%d][%d]=%f\n", rank, j, k, currentCol[j]);
                 u[j][k] = currentCol[j];
             }
         }
-
-        MPI_Barrier(MPI_COMM_WORLD); //===========DELETE
-        MPI_Barrier(MPI_COMM_WORLD); //===========DELETE
 
         // calculate l's kth column
         for (int i = k + offset; i < n; i += size)
@@ -137,7 +125,7 @@ int main(int argc, char **argv)
             {
                 for (int j = 0; j <= k; j++)
                 {
-                    printf("T%d(send): L[%d][%d]=%f\n", rank, k + 1, j, l[k + 1][j]);
+                    //printf("T%d(send): L[%d][%d]=%f\n", rank, k + 1, j, l[k + 1][j]);
                     currentLine[j] = l[k + 1][j];
                 }
             }
@@ -145,7 +133,6 @@ int main(int argc, char **argv)
             if (offset != 1)
                 for (int j = 0; j <= k; j++)
                 {
-                    //printf("T%d(recv): L[%d][%d]=%f\n", rank, k + 1, j, currentLine[j]);
                     l[k + 1][j] = currentLine[j];
                 }
         }
