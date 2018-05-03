@@ -7,6 +7,8 @@
 #include <omp.h>
 #include "csvHelper.h"
 
+#define OMP_N_THREADS 4
+
 double **multiplyMatrices(double **m1, double **m2, int n)
 {
     //generate zero matrix
@@ -155,7 +157,7 @@ void doolittleShared(double **a, double **l, double **u, int n)
         for (int m = k; m < n; m++)
         { //kth row of u
             double tmp = a[k][m];
-#pragma omp parallel for reduction(- \
+#pragma omp parallel for num_threads(OMP_N_THREADS) reduction(- \
                                    : tmp)
             for (int j = 0; j < k; j++)
             {
@@ -166,7 +168,7 @@ void doolittleShared(double **a, double **l, double **u, int n)
         for (int i = k; i < n; i++)
         { //kth column of l
             double tmp = a[i][k];
-#pragma omp parallel for reduction(- \
+#pragma omp parallel for num_threads(OMP_N_THREADS) reduction(- \
                                    : tmp)
             for (int j = 0; j < k; j++)
             {
@@ -201,19 +203,19 @@ int main(int argc, char **argv)
     srand(time(NULL));
     struct timespec t_start, t_stop;
 
-    double **a = getMatrixFromFile(argv[3], i);
+    double **a = getMatrixFromCsv(argv[3], i);
     double **l = generateLowerMatrix(i);
     double **u = generateUpperMatrix(i);
 
     if (isSequential)
     {
-        printf("======= Running Sequential...\n");
+        printf("======= Running Sequential for n=%d...\n", i);
         clock_gettime(CLOCK_MONOTONIC, &t_start);
         doolittle(a, l, u, i);
     }
     else if (isParShared)
     {
-        printf("=======Running Shared...\n");
+        printf("=======Running Shared for n=%d with %d threads...\n", i, OMP_N_THREADS);
         clock_gettime(CLOCK_MONOTONIC, &t_start);
         doolittleShared(a, l, u, i);
     }

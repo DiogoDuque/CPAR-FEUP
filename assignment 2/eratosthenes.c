@@ -7,7 +7,7 @@
 #include <mpi.h>
 #include "csvHelper.h"
 
-#define OMP_N_THREADS 4
+#define OMP_N_THREADS 2
 #define OMP_CHUNK_SIZE 40
 #define OMP_BIG_CHUNK_SIZE 25000000
 
@@ -129,7 +129,6 @@ int main(int argc, char **argv)
     }
 
     long int i = atol(argv[2]);
-    i = 100000000;
 
     struct timespec t_start, t_stop;
     clock_gettime(CLOCK_MONOTONIC, &t_start);

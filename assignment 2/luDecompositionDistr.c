@@ -137,7 +137,7 @@ int main(int argc, char **argv)
                     currentLine[j] = l[k + 1][j];
                 }
             }
-            MPI_Bcast(currentLine, k + 1, MPI_DOUBLE, (rankWithoutOffset + 1) % 4, MPI_COMM_WORLD);
+            MPI_Bcast(currentLine, k + 1, MPI_DOUBLE, (rankWithoutOffset + 1) % size, MPI_COMM_WORLD);
             if (offset != 1)
                 for (int j = 0; j <= k; j++)
                 {

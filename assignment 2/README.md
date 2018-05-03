@@ -11,13 +11,13 @@ gcc luDecomposition.c -Wall -O3 -fopenmp -o lu && ./lu
 5000x5000 - 274s
 6000x6000 - 507s
 
-## LU - shared
-1000x1000 - 1.56s
+## LU - shared 4T
+1000x1000 - 2s
 2000x2000 - 8s
-3000x3000 - 24s
-4000x4000 - 66s
-5000x5000 - 129s
-6000x6000 - 237s
+3000x3000 - 23s
+4000x4000 - 67s
+5000x5000 - 123s
+6000x6000 - 227s
 
 ## LU - distributed
 1000x1000 - 0.81s

@@ -108,13 +108,13 @@ int main(int argc, char **argv){
             localPrimes[localPrimeCount++]=numbers[i];
 
     // get primes on root thread
-    long int* globalPrimesRecv;
+    long int* globalPrimesRecv = NULL;
     if(rank == 0)
         globalPrimesRecv = (long int*)malloc(maxLocalPrimeCount*size*sizeof(long int));
     MPI_Gather(localPrimes,localPrimeCount,MPI_LONG,globalPrimesRecv,maxLocalPrimeCount,MPI_LONG,0,MPI_COMM_WORLD);
 
 
-    long int* globalPrimes;
+    long int* globalPrimes = NULL;
     if(rank == 0)
     {
         globalPrimes = (long int*)malloc(arraySize*sizeof(int));
