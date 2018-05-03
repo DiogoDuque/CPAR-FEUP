@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <omp.h>
 #include <mpi.h>
+#include "csvHelper.h"
 
 #define OMP_N_THREADS 4
 #define OMP_CHUNK_SIZE 40
@@ -12,47 +13,47 @@
 
 struct Primes
 {
-    int *numbers;
-    int size;
+    long int *numbers;
+    long int size;
 };
 
-void displayNumbers(int *numbers, int size)
+void displayNumbers(long int *numbers, long int size)
 {
-    for (int i = 0; i < size; i++)
+    for (long int i = 0; i < size; i++)
     {
-        printf("%d, ", numbers[i]);
+        printf("%ld, ", numbers[i]);
     }
     printf("\n");
 }
 
-struct Primes eratosthenes(int nMax)
+struct Primes eratosthenes(long int nMax)
 {
-    const int nMin = 2;
+    const long int nMin = 2;
 
-    int *numbers = (int *)malloc((nMax - 1) * sizeof(int));
-    for (int n = nMin; n <= nMax; n++) //init array, but only with odd numbers (except for '2')
+    long int *numbers = (long int *)malloc((nMax - 1) * sizeof(long int));
+    for (long int n = nMin; n <= nMax; n++) //init array, but only with odd numbers (except for '2')
     {
         numbers[n - nMin] = (n % 2 == 0 && n != 2) ? 0 : n;
     }
 
-    int numberOfPrimes = 1;
-    for (int i = 1; i < nMax - 1; i += 2) // starts searching on 3, as this allows as to modify the algorithm to skip even numbers
+    long int numberOfPrimes = 1;
+    for (long int i = 1; i < nMax - 1; i += 2) // starts searching on 3, as this allows as to modify the algorithm to skip even numbers
     {
-        int n = numbers[i];
+        long int n = numbers[i];
         if (n == 0) // if was already seen, is not a prime
             continue;
 
         numberOfPrimes++;
-        for (int j = i + 2 * n; j < nMax - 1; j += 2 * n)
+        for (long int j = i + 2 * n; j < nMax - 1; j += 2 * n)
         {
             numbers[j] = 0; // mark as seen and as not prime
         }
     }
 
-    int *primes = (int *)malloc(numberOfPrimes * sizeof(int));
+    long int *primes = (long int *)malloc(numberOfPrimes * sizeof(long int));
     primes[0] = 2;
     numberOfPrimes = 1;
-    for (int i = 1; i < nMax - 1; i += 2)
+    for (long int i = 1; i < nMax - 1; i += 2)
     {
         if (numbers[i] == 0)
             continue;
@@ -64,37 +65,38 @@ struct Primes eratosthenes(int nMax)
     return p;
 }
 
-struct Primes eratosthenesShared(int nMax)
+struct Primes eratosthenesShared(long int nMax)
 {
-    const int nMin = 2;
+    const long int nMin = 2;
 
-    int *numbers = (int *)malloc((nMax - 1) * sizeof(int));
+    long int *numbers = (long int *)malloc((nMax - 1) * sizeof(long int));
 #pragma omp parallel for num_threads(OMP_N_THREADS) schedule(static, OMP_BIG_CHUNK_SIZE)
-    for (int n = nMin; n <= nMax; n++) //init array, but only with odd numbers (except for '2')
+    for (long int n = nMin; n <= nMax; n++) //init array, but only with odd numbers (except for '2')
     {
         numbers[n - nMin] = (n % 2 == 0 && n != 2) ? 0 : n;
     }
 
-    int numberOfPrimes = 1;
-#pragma omp parallel for schedule(dynamic, OMP_CHUNK_SIZE) num_threads(OMP_N_THREADS) reduction(+:numberOfPrimes)
-    for (int i = 1; i < nMax - 1; i += 2) // starts searching on 3, as this allows as to modify the algorithm to skip even numbers
+    long int numberOfPrimes = 1;
+#pragma omp parallel for schedule(dynamic, OMP_CHUNK_SIZE) num_threads(OMP_N_THREADS) reduction(+ \
+                                                                                                : numberOfPrimes)
+    for (long int i = 1; i < nMax - 1; i += 2) // starts searching on 3, as this allows as to modify the algorithm to skip even numbers
     {
-        int n = numbers[i];
+        long int n = numbers[i];
         if (n == 0) // if was already seen, is not a prime
             continue;
 
         numberOfPrimes += 1; // found a prime
-        for (int j = i + 2 * n; j < nMax - 1; j += 2 * n)
+        for (long int j = i + 2 * n; j < nMax - 1; j += 2 * n)
         {
             numbers[j] = 0; // mark as seen and as not prime
         }
     }
 
-    int *primes = (int *)malloc(numberOfPrimes * sizeof(int));
+    long int *primes = (long int *)malloc(numberOfPrimes * sizeof(long int));
     primes[0] = 2;
     numberOfPrimes = 1;
 #pragma omp parallel for num_threads(OMP_N_THREADS) schedule(static, OMP_BIG_CHUNK_SIZE)
-    for (int i = 1; i < nMax - 1; i += 2)
+    for (long int i = 1; i < nMax - 1; i += 2)
     {
         if (numbers[i] == 0)
             continue;
@@ -109,8 +111,8 @@ struct Primes eratosthenesShared(int nMax)
 
 int main(int argc, char **argv)
 {
-    const char usageStr[] = "Usage: eratosthenes <seq|shared>\nseq: Sequential Program\nshared: Parallel Program with Shared memory\n";
-    if (argc != 2)
+    const char usageStr[] = "Usage: eratosthenes <seq|shared> n\nseq: Sequential Program\nshared: Parallel Program with Shared memory\n";
+    if (argc != 3)
     {
         printf(usageStr);
         return 1;
@@ -126,35 +128,35 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    int MAX_N = 600000000;
-    for (int i = 100000000; i <= MAX_N; i += 100000000)
+    long int i = atol(argv[2]);
+    i = 100000000;
+
+    struct timespec t_start, t_stop;
+    clock_gettime(CLOCK_MONOTONIC, &t_start);
+
+    struct Primes p;
+    if (isSequential)
     {
-        struct timespec t_start, t_stop;
-        clock_gettime(CLOCK_MONOTONIC, &t_start);
-
-        struct Primes p;
-        if (isSequential)
-        {   
-            printf("======= Running Sequential...\n");
-            p = eratosthenes(i);
-        }
-        else if (isParShared)
-        {
-            printf("=======Running Shared... Threads: %d, ChunkSize: %d\n",OMP_N_THREADS, OMP_CHUNK_SIZE);
-            p = eratosthenesShared(i);
-        }
-        else
-        {
-            printf("=======Running Test...\n");
-            p = eratosthenesShared(120);
-        }
-
-        clock_gettime(CLOCK_MONOTONIC, &t_stop);
-        float deltaTime = (float) (( t_stop.tv_sec - t_start.tv_sec ) + ( t_stop.tv_nsec - t_start.tv_nsec ) / 1000000000.0); //in seconds
-
-        printf("Found %d primes in %.4lfs\n", p.size, deltaTime);
-        //displayNumbers(p.numbers, p.size);
+        printf("======= Running Sequential...\n");
+        p = eratosthenes(i);
     }
+    else if (isParShared)
+    {
+        printf("=======Running Shared... Threads: %d, ChunkSize: %d\n", OMP_N_THREADS, OMP_CHUNK_SIZE);
+        p = eratosthenesShared(i);
+    }
+    else
+    {
+        return 1;
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &t_stop);
+    float deltaTime = (float)((t_stop.tv_sec - t_start.tv_sec) + (t_stop.tv_nsec - t_start.tv_nsec) / 1000000000.0); //in seconds
+    printf("Found %ld primes in %.4lfs\n", p.size, deltaTime);
+    //displayNumbers(p.numbers, p.size);
+
+    writeLineToCsv("primes.csv", p.numbers, p.size);
+
 
     return 0;
 }

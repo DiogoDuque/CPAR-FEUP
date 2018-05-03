@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <omp.h>
+#include "csvHelper.h"
 
 double **multiplyMatrices(double **m1, double **m2, int n)
 {
@@ -70,11 +71,6 @@ void displayTabbedMatrix(double **m, int n, int spaces)
     }
 }
 
-void displayMatrix(double **m, int n)
-{
-    displayTabbedMatrix(m, n, 0);
-}
-
 double **generateMatrix(int n)
 {
     double **m = malloc(n * sizeof(double *));
@@ -103,7 +99,6 @@ double **generateUpperMatrix(int n)
         {
             if (i > j)
                 m[i][j] = 0;
-            //else m[i][j]=-1;
         }
     }
     return m;
@@ -123,7 +118,6 @@ double **generateLowerMatrix(int n)
                 m[i][j] = 0;
             else if (i == j)
                 m[i][j] = 1;
-            //else m[i][j]=-1;
         }
     }
     return m;
@@ -134,7 +128,7 @@ void doolittle(double **a, double **l, double **u, int n)
 {
     for (int k = 0; k < n; k++)
     {
-        for (int m = k; m < n; m++)  //kth row of u
+        for (int m = k; m < n; m++) //kth row of u
         {
             u[k][m] = a[k][m];
             for (int j = 0; j < k; j++)
@@ -161,7 +155,8 @@ void doolittleShared(double **a, double **l, double **u, int n)
         for (int m = k; m < n; m++)
         { //kth row of u
             double tmp = a[k][m];
-            #pragma omp parallel for reduction(-:tmp)
+#pragma omp parallel for reduction(- \
+                                   : tmp)
             for (int j = 0; j < k; j++)
             {
                 tmp -= l[k][j] * u[j][m];
@@ -171,7 +166,8 @@ void doolittleShared(double **a, double **l, double **u, int n)
         for (int i = k; i < n; i++)
         { //kth column of l
             double tmp = a[i][k];
-            #pragma omp parallel for reduction(-:tmp)
+#pragma omp parallel for reduction(- \
+                                   : tmp)
             for (int j = 0; j < k; j++)
             {
                 tmp -= l[i][j] * u[j][k];
@@ -184,8 +180,8 @@ void doolittleShared(double **a, double **l, double **u, int n)
 
 int main(int argc, char **argv)
 {
-    const char usageStr[] = "Usage: eratosthenes <seq|shared|test>\nseq: Sequential Program\nshared: Parallel Program with Shared memory\n";
-    if (argc != 2)
+    const char usageStr[] = "Usage: eratosthenes <seq|shared> n filename\nseq: Sequential Program\nshared: Parallel Program with Shared memory\nn: dimension of the matrix\n";
+    if (argc != 4)
     {
         printf(usageStr);
         return 1;
@@ -195,51 +191,46 @@ int main(int argc, char **argv)
         isSequential = true;
     else if (strcmp("shared", argv[1]) == 0)
         isParShared = true;
-    else if (strcmp("test", argv[1]) != 0)
+    else
     {
         printf(usageStr);
         return 1;
     }
 
+    int i = atoi(argv[2]);
     srand(time(NULL));
+    struct timespec t_start, t_stop;
 
-    for (int i = 1000; i <= 6000; i += 1000)
+    double **a = getMatrixFromFile(argv[3], i);
+    double **l = generateLowerMatrix(i);
+    double **u = generateUpperMatrix(i);
+
+    if (isSequential)
     {
-        struct timespec t_start, t_stop;
-
-        double **a = generateMatrix(i);
-        double **l = generateLowerMatrix(i);
-        //displayMatrix(l,i);
-        double **u = generateUpperMatrix(i);
-
-        if (isSequential)
-        {
-            printf("======= Running Sequential...\n");
-            clock_gettime(CLOCK_MONOTONIC, &t_start);
-            doolittle(a, l, u, i);
-        }
-        else if (isParShared)
-        {
-            printf("=======Running Shared...\n");
-            clock_gettime(CLOCK_MONOTONIC, &t_start);
-            doolittleShared(a, l, u, i);
-        }
-        else
-        {
-            printf("=======Running Test...\n");
-            clock_gettime(CLOCK_MONOTONIC, &t_start);
-            i = 10;
-            doolittleShared(a, l, u, i);
-        }
-
-        clock_gettime(CLOCK_MONOTONIC, &t_stop);
-        double deltaTime = (t_stop.tv_sec - t_start.tv_sec) + (t_stop.tv_nsec - t_start.tv_nsec) / 1000000000.0; //in seconds
-        printf("Calculated %dx%d in %.4lfs\n", i, i, deltaTime);
-        //testMatrixEquiality(a, multiplyMatrices(l, u, i), i);
-
-        /*printf("\n");
-        displayMatrix(multiplyMatrices(l,u,i),i);//*/
+        printf("======= Running Sequential...\n");
+        clock_gettime(CLOCK_MONOTONIC, &t_start);
+        doolittle(a, l, u, i);
     }
+    else if (isParShared)
+    {
+        printf("=======Running Shared...\n");
+        clock_gettime(CLOCK_MONOTONIC, &t_start);
+        doolittleShared(a, l, u, i);
+    }
+    else
+    {
+        return -1;
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &t_stop);
+    double deltaTime = (t_stop.tv_sec - t_start.tv_sec) + (t_stop.tv_nsec - t_start.tv_nsec) / 1000000000.0; //in seconds
+    printf("Calculated %dx%d in %.4lfs\n", i, i, deltaTime);
+    //testMatrixEquiality(a, multiplyMatrices(l, u, i), i);
+    writeMatrixToCsv("L.csv", l, i);
+    writeMatrixToCsv("U.csv", u, i);
+
+    /*printf("\n");
+        displayMatrix(multiplyMatrices(l,u,i),i);//*/
 
     return 0;
 }

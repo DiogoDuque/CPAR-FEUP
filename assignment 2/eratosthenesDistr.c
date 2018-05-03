@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <mpi.h>
+#include "csvHelper.h"
 
 #define BLOCK_LOW(id,n,p) ((id)*(n)/(p))
 #define BLOCK_HIGH(id,n,p) (BLOCK_LOW((id)+1,n,p)-1)
@@ -25,6 +26,7 @@ int main(int argc, char **argv){
     MPI_Comm_size( MPI_COMM_WORLD, &size);
    	MPI_Comm_rank( MPI_COMM_WORLD, &rank);
     if(argc != 2){
+        printf("Lacking argument n");
         return 1;
     }
 
@@ -78,7 +80,7 @@ int main(int argc, char **argv){
             }
 
         }
-        MPI_Bcast(&prime, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&prime, 1, MPI_LONG, 0, MPI_COMM_WORLD);
     }
 
 
@@ -109,7 +111,7 @@ int main(int argc, char **argv){
     long int* globalPrimesRecv;
     if(rank == 0)
         globalPrimesRecv = (long int*)malloc(maxLocalPrimeCount*size*sizeof(long int));
-    MPI_Gather(localPrimes,localPrimeCount,MPI_LONG_LONG,globalPrimesRecv,maxLocalPrimeCount,MPI_LONG_LONG,0,MPI_COMM_WORLD);
+    MPI_Gather(localPrimes,localPrimeCount,MPI_LONG,globalPrimesRecv,maxLocalPrimeCount,MPI_LONG,0,MPI_COMM_WORLD);
 
 
     long int* globalPrimes;
@@ -123,10 +125,7 @@ int main(int argc, char **argv){
     }
 
 
-
     MPI_Barrier(MPI_COMM_WORLD);
-
-
 
 
     // ========== END ALGORITHM ==========
@@ -136,6 +135,7 @@ int main(int argc, char **argv){
     {
         printf("Found %d primes in %ld numbers\nTime: %.4lfs\n", globalPrimeCount, n, finishTime-startTime);
         //displayNumbers(globalPrimes, globalPrimeCount);
+        writeLineToCsv("primes.csv", globalPrimes, globalPrimeCount);
     }
 
 
