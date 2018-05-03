@@ -68,32 +68,51 @@ int main(int argc, char **argv)
 
     for (int k = 0; k < n; k++)
     {
+        const int offset = (rank - k + size) % size;
+        const int rankWithoutOffset = k % size;
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (offset == 0)
+        {
+            printf("===== k=%d =====\n", k);
+        }
+
         // calculate u's kth row
-        int offset = (rank - k + size) % size;
         for (int m = k + offset; m < n; m += size)
         {
             u[k][m] = a[k][m];
             for (int j = 0; j < k; j++)
             {
+                /*if (offset == 0)
+                    printf("U[%d][%d] -= %fx%f\n", k, m, l[k][j], u[j][m]);//*/
                 u[k][m] -= l[k][j] * u[j][m];
+            }
+            if (m == k && u[k][m] == 0) // check if impossible to calc
+            {
+                printf("Impossible to calculate as U's diagonal has at least one zero! Found at: U[%d][%d]\n", k, m);
+                return 1;
             }
         }
 
         // share u's newly completed column
-        int *currentCol = (int *)malloc(k + 1 * sizeof(double));
+        double *currentCol = (double *)malloc(k + 1 * sizeof(double));
         if (offset == 0)
         {
             for (int j = 0; j <= k; j++)
             {
+                printf("T%d(send): U[%d][%d]=%f\n", rank, j, k, u[j][k]);
                 currentCol[j] = u[j][k];
             }
         }
-        MPI_Bcast(&currentCol, k + 1, MPI_DOUBLE, offset, MPI_COMM_WORLD);
+        MPI_Bcast(currentCol, k + 1, MPI_DOUBLE, rankWithoutOffset, MPI_COMM_WORLD);
         if (offset != 0)
-            for (int j = 0; j < k + 1; j++)
+        {
+            for (int j = 0; j <= k; j++)
             {
+                printf("T%d(recv): U[%d][%d]=%f\n", rank, j, k, currentCol[j]);
                 u[j][k] = currentCol[j];
             }
+        }
 
         // calculate l's kth column
         for (int i = k + offset; i < n; i += size)
@@ -101,27 +120,32 @@ int main(int argc, char **argv)
             l[i][k] = a[i][k];
             for (int j = 0; j < k; j++)
             {
+                //printf("T%d: L[%d][%d] -= %fx%f\n", rank, i, k, l[i][j], u[j][k]);//*/
                 l[i][k] -= l[i][j] * u[j][k];
             }
-            l[i][k] /= u[k][k];
+            l[i][k] = (double)l[i][k] / u[k][k];
         }
 
         // share l's newly completed row
-        int *currentLine = (int *)malloc(k + 1 * sizeof(double));
-        if (offset == 0)
+        if (k < n - 1)
         {
-            for (int j = 0; j < k; j++)
+            double *currentLine = (double *)malloc((k + 1) * sizeof(double));
+            if (offset == 1)
             {
-                currentLine[j] = l[k][j];
+                for (int j = 0; j <= k; j++)
+                {
+                    printf("T%d(send): L[%d][%d]=%f\n", rank, k + 1, j, l[k + 1][j]);
+                    currentLine[j] = l[k + 1][j];
+                }
             }
+            MPI_Bcast(currentLine, k, MPI_DOUBLE, (rankWithoutOffset + 1) % 4, MPI_COMM_WORLD);
+            if (offset != 1)
+                for (int j = 0; j <= k; j++)
+                {
+                    printf("T%d(recv): L[%d][%d]=%f\n", rank, k, j, currentLine[j]);
+                    l[k + 1][j] = currentLine[j];
+                }
         }
-        if (k != 0)
-            MPI_Bcast(&currentLine, k, MPI_DOUBLE, offset, MPI_COMM_WORLD);
-        if (offset != 0 && k != 0)
-            for (int j = 0; j < k; j++)
-            {
-                l[k][j] = currentLine[j];
-            }
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
