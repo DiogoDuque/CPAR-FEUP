@@ -30,21 +30,21 @@ void writeLineToCsv(char* filename, long int* array, long int arraySize){
 
     fprintf(fp, "%ld",array[0]);
     for(long int i=1; i<arraySize; i++){
-        fprintf(fp, ", %ld",array[i]);
+        fprintf(fp, ",%ld",array[i]);
     }
 
     fclose(fp);
 }
 
-void writeMatrixToCsv(char* filename, long double** matrix, long int matrixSize)
+void writeMatrixToCsv(char* filename, double** matrix, int matrixSize)
 {
     FILE* fp = fopen(filename,"w+");
 
     for(long int i=0; i<matrixSize; i++)
     {
-        fprintf(fp, "%Lf",matrix[i][0]);
+        fprintf(fp, "%f",matrix[i][0]);
         for(long int j=1; j<matrixSize; j++){
-            fprintf(fp, ", %Lf",matrix[i][j]);
+            fprintf(fp, ",%f",matrix[i][j]);
         }
         if(i<matrixSize-1){
             fprintf(fp, "\n");
