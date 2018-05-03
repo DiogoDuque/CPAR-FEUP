@@ -62,12 +62,20 @@ int main(int argc, char **argv)
     double **l = generateLowerMatrix(n);
     double **u = generateUpperMatrix(n);
 
-    double startTime = MPI_Wtime();
+    double startTime = 0;
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == 0)
+    {
+        printf("Starting\n");
+        startTime = MPI_Wtime();
+    }
 
     // ========== START ALGORITHM ==========
 
     for (int k = 0; k < n; k++)
     {
+        /*if(rank == 0 && (k % 100) == 0)
+            printf("k=%d\n",k);*/
         const int offset = (rank - k + size) % size;
         const int rankWithoutOffset = k % size;
 
@@ -129,7 +137,7 @@ int main(int argc, char **argv)
                     currentLine[j] = l[k + 1][j];
                 }
             }
-            MPI_Bcast(currentLine, k+1, MPI_DOUBLE, (rankWithoutOffset + 1) % 4, MPI_COMM_WORLD);
+            MPI_Bcast(currentLine, k + 1, MPI_DOUBLE, (rankWithoutOffset + 1) % 4, MPI_COMM_WORLD);
             if (offset != 1)
                 for (int j = 0; j <= k; j++)
                 {
@@ -142,10 +150,10 @@ int main(int argc, char **argv)
 
     // ========== END ALGORITHM ==========
 
-    double finishTime = MPI_Wtime();
     if (rank == 0)
     {
-        printf("Stuff\nTime: %.4lfs\n", finishTime - startTime);
+        double finishTime = MPI_Wtime();
+        printf("Time: %.4lfs\nWriting to files...\n\n", finishTime - startTime);
         writeMatrixToCsv("U.csv", u, n);
         writeMatrixToCsv("L.csv", l, n);
     }

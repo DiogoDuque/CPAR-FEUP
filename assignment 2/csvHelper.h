@@ -42,9 +42,9 @@ void writeMatrixToCsv(char* filename, double** matrix, int matrixSize)
 
     for(long int i=0; i<matrixSize; i++)
     {
-        fprintf(fp, "%f",matrix[i][0]);
+        fprintf(fp, "%.18f",matrix[i][0]);
         for(long int j=1; j<matrixSize; j++){
-            fprintf(fp, ",%f",matrix[i][j]);
+            fprintf(fp, ",%.18f",matrix[i][j]);
         }
         if(i<matrixSize-1){
             fprintf(fp, "\n");

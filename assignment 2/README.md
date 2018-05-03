@@ -20,12 +20,12 @@ gcc luDecomposition.c -Wall -O3 -fopenmp -o lu && ./lu
 6000x6000 - 237s
 
 ## LU - distributed
-1000x1000 - s
-2000x2000 - s
-3000x3000 - s
-4000x4000 - s
-5000x5000 - s
-6000x6000 - s
+1000x1000 - 0.81s
+2000x2000 - 9s
+3000x3000 - 39s
+4000x4000 - 116s
+5000x5000 - 280s
+6000x6000 - 620s
 
 ## Sieve - seq
 100000000 - 2.51s
