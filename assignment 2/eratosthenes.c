@@ -7,7 +7,7 @@
 #include <mpi.h>
 #include "csvHelper.h"
 
-#define OMP_N_THREADS 2
+#define OMP_N_THREADS 4
 #define OMP_CHUNK_SIZE 40
 #define OMP_BIG_CHUNK_SIZE 25000000
 
@@ -100,7 +100,7 @@ struct Primes eratosthenesShared(long int nMax)
     {
         if (numbers[i] == 0)
             continue;
-#pragma omp critical //cannot make a reduction because numberOfPrimes is needed after the increment
+
         primes[numberOfPrimes++] = numbers[i];
     }
     struct Primes p;
